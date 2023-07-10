@@ -1,0 +1,2818 @@
+---
+title: "A simulation study based on Wilcoxon Signed Rank Test"
+author: "Abhirup Sengupta, Subhasis Sur , Shantanu Nayek"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+```{r Libraries, message=FALSE,echo = FALSE, warning=FALSE}
+set.seed(1)
+library(VGAM)
+library(car)
+library(ggplot2)
+```
+
+
+```{r echo = FALSE}
+theme_new=theme(
+  plot.title =element_text(size=16,
+                           hjust=0.5,face="bold"),
+  plot.subtitle =element_text(size=14,
+                              hjust=0.5,face="bold"),
+  legend.title=element_text(size=10,hjust=0.5,
+                            face="bold.italic"),
+  axis.title=element_text(face="bold.italic"),
+  axis.text=element_text(face="bold.italic")
+)
+```
+
+## Introduction 
+
+- Wilcoxon Signed Rank Test is a non parametric test for one sample location problem . 
+
+
+\textbf{Assumption} 
+
+- We assume that $X_1 , X_2 , ...., X_n$ is a iid sample from $F(x-\theta)$ , where F belongs to a location family  is continuous and symmetric and F(0) = 1/2
+
+\textbf{Hypothesis of Interest} 
+
+Now , we want to test the null hypothesis $H_0$ against some alternative hypothesis 
+
+- $H_1$ : $\theta > 0$
+- $H_2$ : $\theta < 0$  
+- $H_3$ : $\theta \neq 0$
+
+##
+
+\textbf{Test Statistic}
+
+- $T$ = $\sum_{j=1}^{n}{S_jR_j}$
+
+- $R_j$ = rank of $|{x_j}|$
+
+- $S_j$ = $I_{(x_j>0)}$
+
+\textbf{Critical Region}
+
+- Reject $H_0$ in favour of $H_1$ for large values of T 
+
+- Reject $H_0$ in favour of $H_2$ for small values of T 
+
+- Reject $H_0$ in favour of $H_3$ for both large and small values of $T$
+
+
+
+```{r section 1 part a, include=FALSE , echo = FALSE}
+
+## define a function for taking sample and drawing histrogram from NORMAL
+norm_test.stat=function(R,n,loc,scale){
+  test_stat=c(0)
+  for (iter in 1:R){
+   sample=rnorm(n,loc,scale)
+    abs_sample=abs(sample)
+    Rj=rank(abs_sample)
+    sj=ifelse(sample>0,1,0)
+    test.stat=sum(sj*Rj)
+    test_stat[iter]=test.stat
+  }
+  test_stat
+}
+## define a function for taking sample and drawing histrogram from CAUCHY
+cauchy_test.stat=function(R,n,loc,scale){
+  test_stat=c(0)
+  for (iter in 1:R){
+   sample=rcauchy(n,loc,scale)
+    abs_sample=abs(sample)
+    Rj=rank(abs_sample)
+    sj=ifelse(sample>0,1,0)
+    test.stat=sum(sj*Rj)
+    test_stat[iter]=test.stat
+  }
+  test_stat
+}
+## define a function for taking sample and drawing histrogram from DOUBLE EXPONENTIAL
+doubleexp_test.stat=function(R,n,loc,scale){
+  test_stat=c(0)
+  for (iter in 1:R){
+   sample=rlaplace(n,loc,scale)
+    abs_sample=abs(sample)
+    Rj=rank(abs_sample)
+    sj=ifelse(sample>0,1,0)
+    test.stat=sum(sj*Rj)
+    test_stat[iter]=test.stat
+  }
+  test_stat
+}
+## define a function for taking sample and drawing histrogram from LOGISTIC
+logistic_test.stat=function(R,n,loc,scale){
+  test_stat=c(0)
+  for (iter in 1:R){
+   sample=rlogis(n,loc,scale)
+    abs_sample=abs(sample)
+    Rj=rank(abs_sample)
+    sj=ifelse(sample>0,1,0)
+    test.stat=sum(sj*Rj)
+    test_stat[iter]=test.stat
+  }
+  test_stat
+}
+## define a function for taking sample and drawing histrogram from POISSON
+poisson_test.stat=function(R,n,lamda){
+  test_stat=c(0)
+  for (iter in 1:R){
+   sample=rpois(n,lamda)
+    abs_sample=abs(sample)
+    Rj=rank(abs_sample)
+    sj=ifelse(sample>0,1,0)
+    test.stat=sum(sj*Rj)
+    test_stat[iter]=test.stat
+  }
+  test_stat
+}
+## define a function for taking sample and drawing histrogram from EXPONENTIAL
+exponential_test.stat=function(R,n,lamda){
+  test_stat=c(0)
+  for (iter in 1:R){
+   sample=rexp(n,lamda)
+    abs_sample=abs(sample)
+    Rj=rank(abs_sample)
+    sj=ifelse(sample>0,1,0)
+    test.stat=sum(sj*Rj)
+    test_stat[iter]=test.stat
+  }
+  test_stat
+}
+
+```
+
+
+## Distribution free of the test statistic under H0 :
+
+- Here we have taken the four distributions ( Normal , Cauchy , Laplace and logistic ) which satisfies the assumptions .
+
+- We draw a random sample of size n from each distribution $N(0,2)$ ,$C(0,2)$ ,$DE(0,2)$ and $logistic(0,2)$ and calculate the value of the test statistic and replicate this 10,000 times and plot the values using histogram and try to see if these density plots (for ease of visualization we take the density plot instead of histogram) look like similar or not.
+
+- n = 10
+
+```{r section 1 part b, echo= FALSE, warning=FALSE}
+library(ggplot2)
+d1=norm_test.stat(10000,10,0,2)
+d2=cauchy_test.stat(10000,10,0,2)
+d3=doubleexp_test.stat(10000,10,0,2)
+d4=logistic_test.stat(10000,10,0,2)
+df1=cbind(Normal=d1,Cauchy=d2,Laplace=d3,Logistic=d4)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=10")+
+  theme_new
+```
+
+- The test statistic is distribution free under $H_0$ for n = 10 
+
+## Distribution free of the test statistic under H0 : 
+
+- n = 20
+
+```{r echo = FALSE , warning = FALSE}
+d1=norm_test.stat(10000,20,0,2)
+d2=cauchy_test.stat(10000,20,0,2)
+d3=doubleexp_test.stat(10000,20,0,2)
+d4=logistic_test.stat(10000,20,0,2)
+df1=cbind(Normal=d1,Cauchy=d2,Laplace=d3,Logistic=d4)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=20")+
+  theme_new
+```
+
+
+- The test statistic is distribution free under $H_0$ for n = 20 
+
+
+## Distribution free under H0 :
+
+- n = 30
+
+```{r echo = FALSE , warning = FALSE}
+d1=norm_test.stat(10000,30,0,2)
+d2=cauchy_test.stat(10000,30,0,2)
+d3=doubleexp_test.stat(10000,30,0,2)
+d4=logistic_test.stat(10000,30,0,2)
+df1=cbind(Normal=d1,Cauchy=d2,Laplace=d3,Logistic=d4)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=30")+
+  theme_new
+```
+
+- The test statistic is distribution free under $H_0$ for n = 30
+
+
+## Distribution free under H0 :
+
+```{r echo = FALSE , warning = FALSE}
+d1=norm_test.stat(10000,50,0,2)
+d2=cauchy_test.stat(10000,50,0,2)
+d3=doubleexp_test.stat(10000,50,0,2)
+d4=logistic_test.stat(10000,50,0,2)
+df1=cbind(Normal=d1,Cauchy=d2,Laplace=d3,Logistic=d4)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=50")+
+  theme_new
+```
+
+-  The test statistic is distribution free under $H_0$ for n = 50
+
+## Distribution free under H0 :
+
+- n = 100
+
+```{r echo = FALSE , warning = FALSE}
+d1=norm_test.stat(10000,100,0,2)
+d2=cauchy_test.stat(10000,100,0,2)
+d3=doubleexp_test.stat(10000,100,0,2)
+d4=logistic_test.stat(10000,100,0,2)
+df1=cbind(Normal=d1,Cauchy=d2,Laplace=d3,Logistic=d4)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=100")+
+  theme_new
+```
+
+- The test statistic is distribution free under $H_0$ for n = 100
+
+
+## Checking Distribution free under H1 :
+
+- We draw a random sample of size n from each distribution $N(2,2)$ ,$C(2,2)$ ,$DE(2,2)$and $logistic(2,2)$ and calculate the value of the test statistic and replicate this 10,000 times and plot the values using histogram and try to see if these density plots (for ease of visualization we take the density plot instead of histogram) look like similar or not.
+
+- n = 10
+
+```{r echo=FALSE, warning=FALSE}
+library(ggplot2)
+d1=norm_test.stat(10000,10,2,2)
+d2=cauchy_test.stat(10000,10,2,2)
+d3=doubleexp_test.stat(10000,10,2,2)
+d4=logistic_test.stat(10000,10,2,2)
+df1=cbind(Normal=d1,Cauchy=d2,Laplace=d3,Logistic=d4)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=10")+
+  theme_new
+```
+- It is not distribution free
+
+## Checking Distribution free under H1 :
+
+- n = 20
+
+
+```{r echo=FALSE , warning=FALSE}
+library(ggplot2)
+d1=norm_test.stat(10000,20,2,2)
+d2=cauchy_test.stat(10000,20,2,2)
+d3=doubleexp_test.stat(10000,20,2,2)
+d4=logistic_test.stat(10000,20,2,2)
+df1=cbind(Normal=d1,Cauchy=d2,Laplace=d3,Logistic=d4)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=20")+
+  theme_new
+```
+- The test statistic is not distribution free for n = 20 
+
+## Checking Distribution free under H1 :
+
+- n = 30
+
+
+```{r echo=FALSE , warning=FALSE}
+library(ggplot2)
+d1=norm_test.stat(10000,30,2,2)
+d2=cauchy_test.stat(10000,30,2,2)
+d3=doubleexp_test.stat(10000,30,2,2)
+d4=logistic_test.stat(10000,30,2,2)
+df1=cbind(Normal=d1,Cauchy=d2,Laplace=d3,Logistic=d4)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=30")+
+  theme_new
+```
+
+- The test statistic is not distribution free for n = 30
+
+## Checking Distribution free under H1 :
+
+- n = 50
+
+
+```{r echo=FALSE,warning=FALSE}
+library(ggplot2)
+d1=norm_test.stat(10000,50,2,2)
+d2=cauchy_test.stat(10000,50,2,2)
+d3=doubleexp_test.stat(10000,50,2,2)
+d4=logistic_test.stat(10000,50,2,2)
+df1=cbind(Normal=d1,Cauchy=d2,Laplace=d3,Logistic=d4)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=50")+
+  theme_new
+```
+
+-  The test statistic is not distribution free for n = 50 
+
+```{r echo = FALSE , warning =FALSE}
+bernouli_test.stat=function(R,n){
+  j=1:n
+  test_stat=c(0)
+  for (iter in 1:R){
+  wj=rbinom(n,1,0.5)
+  sum=sum(j*wj)
+  test_stat[iter]=sum
+  }
+  test_stat
+}
+```
+
+
+## Checking of the exact distribution of wilcoxon signed rank test with the linear combination of Ber(1,0.5) under H0 by simulation : 
+
+- Here , We draw a random Sample from a specific  distribution and find the value of the test statistic and replicate this process 10000 times and plot it using density plot . And We also draw a random sample from Bernoulli(1,0.5) and using the form of Wilcoxon signed rank test statistic as a linear combination of bernoulli distribution , repeating this we find the value of test statistic and plot it using density plot 
+
+- We do this process for various sample size n . 
+
+- we try to see that whether they looks similar or not .
+
+
+## Exact Distributions of Wilcoxon signed Rank Test Statistic for Normal distribution for n = 10 :
+
+- Here , we draw random sample from Normal(0,2) Distribution . 
+
+- n = 10 
+
+```{r echo =FALSE , warning=FALSE}
+d1=norm_test.stat(10000,10,0,2)
+d2=bernouli_test.stat(10000,10)
+df1=cbind(Normal=d1,Bernouli_linear_comb=d2)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=10")+
+  theme_new
+```
+
+
+- from the plot , clearly both are same for normal distribution for sample sizes n = 10 .
+
+## Exact Distributions of Wilcoxon Signed Rank Test Statistic for Normal distribution for n = 30 :
+
+- Here , we draw random sample from Normal(0,2) Distribution .
+
+- n = 30 
+
+```{r echo =FALSE , warning=FALSE}
+d1=norm_test.stat(10000,30,0,2)
+d2=bernouli_test.stat(10000,30)
+df1=cbind(Normal=d1,Bernouli_linear_comb=d2)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=30")+
+  theme_new
+```
+
+- from the plot , clearly both are same for normal distribution for sample sizes n = 30 .
+
+## Exact Distributions of Wilcoxon Signed Rank Test Statistic for Cauchy distributions for n = 10 :
+
+- Here , we draw random sample from cauchy(0,2) Distribution .
+
+- n = 10
+
+```{r echo=FALSE,warning=FALSE }
+d1=cauchy_test.stat(10000,10,0,2)
+d2=bernouli_test.stat(10000,10)
+df1=cbind(cauchy=d1,Bernouli_linear_comb=d2)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=10")+
+  theme_new
+```
+
+- from the plot , clearly both are same for cauchy distribution for sample sizes n = 10 .
+
+
+## Exact Distributions of Wilcoxon Signed Rank Test Statistic for Cauchy distribution for n = 30 :
+
+- Here , we draw random sample from Cauchy(0,2) Distribution .
+
+- n = 30
+
+```{r echo=FALSE,warning=FALSE }
+d1=cauchy_test.stat(10000,30,0,2)
+d2=bernouli_test.stat(10000,30)
+df1=cbind(cauchy=d1,Bernouli_linear_comb=d2)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=30")+
+  theme_new
+```
+- from the plot , clearly both are same for Cauchy distribution for sample sizes n = 30 
+ 
+- So , We can conclude that the exact distribution of Wilcoxon Signed Rank test statistic is same as the distribution of linear combination of bernoulli(1,0.5) distribution  
+
+
+## Violation of Assumption  :
+
+- There are some assumptions for Wilcoxon Signed Rank test statistic which are like F(x) is continuous and F(x) is symmetric 
+
+- So , we want to see what happens if the assumptions are violated  
+
+## Violation of Assumptions ( Continuous assumption is violated ) : 
+
+-  We draw the random sample from a discrete distributions namely, Poisson Distributions with parameter 2 .Then , We find the value of the test statistic and replicate this process 10000 times and plot it using density plot . And We also draw a random sample from Ber(1,0.5) and using the form of Wilcoxon signed rank test statistic as a linear combination of bernoulli distribution , repeating this upto 10000 times ,  we find the value of test statistic and plot it using density plot 
+
+- We do this process for various sample sizes .  
+
+## 
+
+- n = 10 .
+
+```{r echo=FALSE,warning=FALSE}
+d1=poisson_test.stat(10000,10,2)
+d2=bernouli_test.stat(10000,10)
+df1=cbind(poisson=d1,Bernouli_linear_comb=d2)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=10")+
+  theme_new
+```
+
+- from the plot , it is observed that both are not same for n = 10  . 
+
+##
+
+- n = 30 
+
+```{r echo=FALSE,warning=FALSE}
+d1=poisson_test.stat(10000,30,2)
+d2=bernouli_test.stat(10000,30)
+df1=cbind(poisson=d1,Bernouli_linear_comb=d2)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=30")+
+  theme_new
+```
+
+- from the plot , it is observed that both are not same  for n = 30 . 
+
+
+## Violation of Assumption ( Symmetricity assumption is violated) :
+
+-  we draw the random sample from a non-symmetric distributions namely, Exponential Distributions with parameter 2 . Then we find the value of the test statistic and replicate this process 10000 times and plot it using density plot . And We also draw a random sample from Bernoulli(1,0.5) and using the form of Wilcoxon signed rank test statistic as a linear combination of bernoulli distribution , repeating this we find the value of test statistic and plot it using density plot .
+
+- Then we do the process for various sample sizes n .
+
+##
+
+- n = 10 
+
+```{r echo=FALSE,warning=FALSE}
+d1=exponential_test.stat(10000,10,2)
+d2=bernouli_test.stat(10000,10)
+df1=cbind(exponential=d1,Bernouli_linear_comb=d2)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=10")+
+  theme_new
+```
+
+- Both distributions are not same . This thing happens for violation of symmetry of F(x) .
+
+
+##
+
+- n = 30 
+
+```{r echo=FALSE,warning=FALSE}
+d1=exponential_test.stat(10000,30,2)
+d2=bernouli_test.stat(10000,30)
+df1=cbind(exponential=d1,Bernouli_linear_comb=d2)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=30")+
+  theme_new
+```
+
+- Both distributions are not same . This thing happens for violation of symmetry of F(x) .
+
+
+## Checking wheather Wilcoxon Signed Rank Test can be written as the number of Walsh Averages  
+
+- Now , we want to see wheather Wilcoxon Signed Rank Test can be written as the number of walsh averages or not . 
+
+- We draw a random sample from a particular distributions and find the values of Walsh Averages and replicate this process upto 10,000 times . 
+
+- We also draw a random sample from Bernoulli(1,0.5) and using the form of Wilcoxon signed rank test statistic as a linear combination of bernoulli distribution , we find the value of test statistic and plot it using density plot repeating this process 10000 times . 
+
+```{r echo=FALSE,warning=FALSE}
+
+count=array(0)
+for(k in 1:10000)
+{
+n=10
+s=rcauchy(n,0,4)
+t=sort(s)
+ct=0
+for(i in 1:(length(t)-1))
+{
+  for(j in i:length(t))
+  {
+    m=(t[i]+t[j])/2
+    if(m>0)
+    {
+      ct=ct+1
+    }
+  }
+}
+
+count[k]=ct
+}
+
+```
+
+##
+
+- n = 10 
+
+- Here , we draw a random sample from cauchy(0,4) distribution
+
+
+```{r echo=FALSE,warning=FALSE}
+d1=count
+d2=bernouli_test.stat(10000,10)
+df1=cbind(No.ofWalshaverage=d1,Bernouli_linear_comb=d2)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=10")+
+  theme_new
+```
+
+- From the plot , it is observed that both distributions are same . 
+
+## 
+
+- n = 20 
+
+- Here , we draw the random sample from Cauchy(0,4) distribution . 
+
+```{r echo=FALSE,warning=FALSE}
+
+count=array(0)
+for(k in 1:10000)
+{
+n=20
+s=rcauchy(n,0,4)
+t=sort(s)
+ct=0
+for(i in 1:(length(t)-1))
+{
+  for(j in i:length(t))
+  {
+    m=(t[i]+t[j])/2
+    if(m>0)
+    {
+      ct=ct+1
+    }
+  }
+}
+
+count[k]=ct
+}
+
+
+d1=count
+d2=bernouli_test.stat(10000,20)
+df1=cbind(No.ofWalshaverage=d1,Bernouli_linear_comb=d2)
+meltdata=reshape::melt(df1)
+ggplot(data=meltdata,aes(value,fill=X2))+
+  geom_density(alpha=0.6)+labs(title="n=20")+
+  theme_new
+```
+
+- From the plot , it is observed that both distributions are same .
+
+- So , we can conclude that , the wilcoxon signed rank test statistic can be written as the number of walsh averages . 
+
+```{r Test statistic function, echo=FALSE, warning=FALSE}
+test.stat=function(data)
+{
+  n=length(data[,1])
+  R=length(data[1,])
+   abs_data=abs(data)
+   test_stat=array(0)
+   for(i in 1:R)
+   {
+    Rj=rank(abs_data[,i])
+    sj=ifelse(data[,i]>0,1,0)
+    teststat=sum(sj*Rj)
+    test_stat[i]=teststat
+   }
+   test_stat
+}
+
+```
+
+```{r defined 2 function for normal and cauchy Asymptotic, echo=FALSE, warning=FALSE}
+
+norm_test_data=function(R,n,loc,scale){
+  test_stat_data=matrix(rep(0,times=n*R),nrow=n,ncol=R)
+  for (iter in 1:R){
+   test_stat_data[,iter]=rnorm(n,loc,scale)
+  }
+  test_stat_data
+}
+
+cauchy_test_data=function(R,n,loc,scale){
+  test_stat_data=matrix(rep(0,times=n*R),nrow=n,ncol=R)
+  for (iter in 1:R){
+   test_stat_data[,iter]=rcauchy(n,loc,scale)
+  }
+  test_stat_data
+}
+```
+```{r message=FALSE}
+x=array(0)
+```
+
+
+
+## Asymptotic Distribution of Test Statistic Under H0 
+
+- We want to see the Asymptotic Distribution of the test statistic under H0 . 
+
+- We draw a random sample from a particular distribution and find the value of the test statistic and replicate this process 10000 times anddraw a quantile-quantile plot for checking normality .  
+
+## 
+
+- Here we draw random sample from Normal(0,2) istribution
+
+- n = 10
+
+```{r echo=FALSE, warning=FALSE}
+n1=10
+d1=norm_test_data(10000,n1,0,2)
+t1=test.stat(d1)
+t1_std=(t1-(n1*(n1+1)/4))/sqrt(n1*(n1+1)*(2*n1+1)/24)
+qqPlot(t1_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+
+dt=t1_std
+n=length(t1_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+x[1]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+- From the plot , it is observed very much deviation from normality . 
+
+## 
+
+- We draw a random sample from Normal(0,2) distribution 
+ 
+- n = 20 
+
+```{r echo=FALSE, warning=FALSE }
+
+n2=20
+d2=norm_test_data(10000,n2-n1,0,2)
+d2=rbind(d1,d2)
+t2=test.stat(d2)
+t2_std=(t2-(n2*(n2+1)/4))/sqrt(n2*(n2+1)*(2*n2+1)/24)
+qqPlot(t2_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t2_std
+n=length(t2_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+
+x[2]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one . 
+
+## 
+
+- We draw a random sample from Normal(0,2) distribution . 
+
+- n = 30
+
+```{r echo=FALSE, warning=FALSE}
+
+n3=30
+d3=norm_test_data(10000,n3-n2,0,2)
+d3=rbind(d2,d3)
+t3=test.stat(d3)
+t3_std=(t3-(n3*(n3+1)/4))/sqrt(n3*(n3+1)*(2*n3+1)/24)
+qqPlot(t3_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t3_std
+n=length(t3_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+x[3]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+- - From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- We draw a random sample from Normal(0,2) distribution . 
+
+- n = 50
+
+```{r echo=FALSE, warning=FALSE }
+n4=50
+d4=norm_test_data(10000,n4-n3,0,2)
+d4=rbind(d3,d4)
+t4=test.stat(d4)
+t4_std=(t4-(n4*(n4+1)/4))/sqrt(n4*(n4+1)*(2*n4+1)/24)
+qqPlot(t4_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t4_std
+n=length(t4_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+x[4]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+-- From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- We draw a random sample from Normal(0,2) distribution .
+
+- n = 100 
+
+```{r echo=FALSE, warning=FALSE }
+n5=100
+d5=norm_test_data(10000,n5-n4,0,2)
+d5=rbind(d4,d5)
+t5=test.stat(d5)
+t5_std=(t5-(n5*(n5+1)/4))/sqrt(n5*(n5+1)*(2*n5+1)/24)
+qqPlot(t5_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t5_std
+n=length(t5_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+x[5]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- We draw a random sample from Normal(0,2) distribution . 
+
+- n = 200
+
+```{r echo=FALSE , warning=FALSE}
+n6=200
+d6=norm_test_data(10000,n6-n5,0,2)
+d6=rbind(d5,d6)
+t6=test.stat(d6)
+t6_std=(t6-(n6*(n6+1)/4))/sqrt(n6*(n6+1)*(2*n6+1)/24)
+qqPlot(t6_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t6_std
+n=length(t6_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+x[6]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+
+## Goodness of fit  with Normal(0,1)
+
+- We divide the whole data in 6 classes 
+
+- Find $\sum_{i=1}^{6}{(Ei-Oi)^2/Ei}$ and the corresponding p value . 
+
+```{r echo=FALSE , warning=FALSE}
+n=c(10,20,30,50,100,200)
+df_norm=data.frame(n,x)
+colnames(df_norm)=c("sample size","p value")
+df_norm
+
+ggplot(df_norm,aes(x=c(10,20,30,50,100,200)))+
+  geom_line(aes(y=df_norm[,2],col= "sample size"),lwd=1.1)+
+labs(x="sample size",y="p value")+geom_hline(yintercept = 0.05)
+```
+
+- converge to normal(0,1) for n between 20 to 30
+
+##
+
+- Here , we draw a random sample from Cauchy (0,2) distribution . 
+
+- n = 10
+
+```{r echo=FALSE}
+y=array(0)
+```
+
+```{r echo=FALSE, warning=FALSE }
+n1=10
+d1=cauchy_test_data(10000,n1,0,2)
+t1=test.stat(d1)
+t1_std=(t1-(n1*(n1+1)/4))/sqrt(n1*(n1+1)*(2*n1+1)/24)
+qqPlot(t1_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t1_std
+n=length(t1_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+y[1]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+- from the plot , it is observed that there is very much deviation from normality . 
+
+## 
+
+- we draw a random sample from Cauchy (0,2) distribution
+
+- n = 20
+
+```{r echo=FALSE, warning=FALSE}
+n2=20
+d2=cauchy_test_data(10000,n2-n1,0,2)
+d2=rbind(d1,d2)
+t2=test.stat(d2)
+t2_std=(t2-(n2*(n2+1)/4))/sqrt(n2*(n2+1)*(2*n2+1)/24)
+qqPlot(t2_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t2_std
+n=length(t2_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+
+y[2]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- we draw a random sample from Cauchy (0,2) distribution
+
+- n = 30
+
+```{r echo=FALSE, warning=FALSE}
+n3=35
+d3=cauchy_test_data(10000,n3-n2,0,2)
+d3=rbind(d2,d3)
+t3=test.stat(d3)
+t3_std=(t3-(n3*(n3+1)/4))/sqrt(n3*(n3+1)*(2*n3+1)/24)
+qqPlot(t3_std,xlab="theoretical quantiles",ylab= " sample quantiles")
+
+dt=t3_std
+n=length(t3_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+
+y[3]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- we draw a random sample from Cauchy (0,2) distribution
+
+- n = 50
+
+```{r echo=FALSE, warning=FALSE}
+n4=50
+d4=cauchy_test_data(10000,n4-n3,0,2)
+d4=rbind(d3,d4)
+t4=test.stat(d4)
+t4_std=(t4-(n4*(n4+1)/4))/sqrt(n4*(n4+1)*(2*n4+1)/24)
+qqPlot(t4_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t4_std
+n=length(t4_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+y[4]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+
+```
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- we draw a random sample from Cauchy (0,2) distribution
+
+- n = 100
+
+```{r echo=FALSE, warning=FALSE}
+n5=100
+d5=cauchy_test_data(10000,n5-n4,0,2)
+d5=rbind(d4,d5)
+t5=test.stat(d5)
+t5_std=(t5-(n5*(n5+1)/4))/sqrt(n5*(n5+1)*(2*n5+1)/24)
+qqPlot(t5_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t5_std
+n=length(t5_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+y[5]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- we draw a random sample from Cauchy (0,2) distribution
+
+- n = 200
+
+```{r echo=FALSE, warning=FALSE}
+n6=200
+d6=cauchy_test_data(10000,n6-n5,0,2)
+d6=rbind(d5,d6)
+t6=test.stat(d6)
+t6_std=(t6-(n6*(n6+1)/4))/sqrt(n6*(n6+1)*(2*n6+1)/24)
+qqPlot(t6_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t6_std
+n=length(t6_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+y[6]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+- So , we can conclude that the distribution is asymptotically normal distribution under $H_0$. 
+
+## Goodness of fit with normal(0,1)
+
+- We divide the whole data in 6 classes 
+
+- Find $\sum_{i=1}^{6}{(Ei-Oi)^2/Ei}$ and the corresponding p value . 
+
+```{r echo=FALSE}
+
+n=c(10,20,30,50,100,200)
+df_cauchy=data.frame(n,y)
+colnames(df_cauchy)=c("sample size","p value")
+df_cauchy
+
+ggplot(df_cauchy,aes(x=c(10,20,30,50,100,200)))+
+  geom_line(aes(y=df_cauchy[,2],col= "sample size"),lwd=1.1)+
+labs(x="sample size",y="p value")+geom_hline(yintercept = 0.05)
+
+```
+
+- converge to normal(0,1) for n between 20 to 30
+
+## Asymptotic Distribution of Test Statistic Under H1
+
+- We want to see the Asymptotic Distribution of the test statistic under H1 . 
+
+- We draw a random sample from a particular distribution and find the value of the test statistic and replicate this process 10000 times and draw a quantile-quantile plot for checking normality .  
+
+##
+- We draw random sample from Normal(-1,2) distribution .
+
+- n = 10
+
+```{r echo=FALSE}
+normalized=function(data){
+  data=(data-mean(data))/sqrt(var(data))
+  data
+}
+```
+
+- Calculate the test statistic . 
+
+- Convert the data into $(x-mean(x))/sd(x)$
+
+```{r echo=FALSE, warning=FALSE}
+x1=array(0)
+n1=10
+d1=norm_test_data(10000,n1,-1,2)
+t1=test.stat(d1)
+t1_std=(t1-(n1*(n1+1)/4))/sqrt(n1*(n1+1)*(2*n1+1)/24)
+t1_std=normalized(t1_std)
+qqPlot(t1_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+
+dt=t1_std
+n=length(t1_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+
+x1[1]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+ - From the plot , it is observed that there is very much deviation from normality .
+
+## 
+
+- We draw a random sample from Normal(-1,2) distribution . 
+
+- n = 20 
+
+```{r echo=FALSE, warning=FALSE }
+
+n2=20
+d2=norm_test_data(10000,n2-n1,-1,2)
+d2=rbind(d1,d2)
+t2=test.stat(d2)
+t2_std=(t2-(n2*(n2+1)/4))/sqrt(n2*(n2+1)*(2*n2+1)/24)
+t2_std=normalized(t2_std)
+qqPlot(t2_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t2_std
+n=length(t2_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+
+x1[2]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- We draw a random sample from Normal(-1,2) distribution .
+
+- n = 30
+
+```{r echo=FALSE, warning=FALSE}
+
+
+
+n3=30
+d3=norm_test_data(10000,n3-n2,-1,2)
+d3=rbind(d2,d3)
+t3=test.stat(d3)
+t3_std=(t3-(n3*(n3+1)/4))/sqrt(n3*(n3+1)*(2*n3+1)/24)
+t3_std=normalized(t3_std)
+qqPlot(t3_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t3_std
+n=length(t3_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+
+x1[3]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- We draw a random sample from Normal(-1,2) distribution .
+
+- n = 50
+
+```{r echo=FALSE, warning=FALSE }
+n4=50
+d4=norm_test_data(10000,n4-n3,-1,2)
+d4=rbind(d3,d4)
+t4=test.stat(d4)
+t4_std=(t4-(n4*(n4+1)/4))/sqrt(n4*(n4+1)*(2*n4+1)/24)
+t4_std=normalized(t4_std)
+qqPlot(t4_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t4_std
+n=length(t4_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+x1[4]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- We draw a random sample from Normal(-1,2) distribution . 
+
+- n = 100 
+
+```{r echo=FALSE, warning=FALSE }
+n5=100
+d5=norm_test_data(10000,n5-n4,-1,2)
+d5=rbind(d4,d5)
+t5=test.stat(d5)
+t5_std=(t5-(n5*(n5+1)/4))/sqrt(n5*(n5+1)*(2*n5+1)/24)
+t5_std=normalized(t5_std)
+qqPlot(t5_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+
+dt=t5_std
+n=length(t5_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+x1[5]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- We draw a random sample from Normal(-1,2) distribution .
+
+- n = 200
+
+```{r echo=FALSE , warning=FALSE}
+n6=200
+d6=norm_test_data(10000,n6-n5,-1,2)
+d6=rbind(d5,d6)
+t6=test.stat(d6)
+t6_std=(t6-(n6*(n6+1)/4))/sqrt(n6*(n6+1)*(2*n6+1)/24)
+t6_std=normalized(t6_std)
+qqPlot(t6_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t6_std
+n=length(t6_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+x1[6]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+##
+
+- We draw a random sample from Normal(-1,2) distribution . 
+
+- n = 250
+
+```{r echo=FALSE}
+
+n7=250
+d7=norm_test_data(10000,n7-n6,-1,2)
+d7=rbind(d6,d7)
+t7=test.stat(d7)
+t7_std=(t7-(n7*(n7+1)/4))/sqrt(n7*(n7+1)*(2*n7+1)/24)
+t7_std=normalized(t7_std)
+qqPlot(t7_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+
+dt=t7_std
+n=length(t7_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+x1[7]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+##
+
+- We draw a random sample from Normal(-1,2) distribution . 
+
+- n = 300
+
+```{r echo=FALSE}
+n8=300
+d8=norm_test_data(10000,n8-n7,-1,2)
+d8=rbind(d7,d8)
+t8=test.stat(d8)
+t8_std=(t8-(n8*(n8+1)/4))/sqrt(n8*(n8+1)*(2*n8+1)/24)
+t8_std=normalized(t8_std)
+qqPlot(t8_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+
+dt=t8_std
+n=length(t8_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+x1[8]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+## Goodness of fit with normal(0,1)
+
+```{r echo=FALSE}
+n=c(10,20,30,50,100,200,250,300)
+df_norm1=data.frame(n,x1)
+colnames(df_norm1)=c("sample size","p value")
+df_norm1
+
+ggplot(df_norm1,aes(x=c(10,20,30,50,100,200,250,300)))+
+  geom_line(aes(y=df_norm1[,2],col= "sample size"),lwd=1.1)+
+labs(x="sample size",y="p value")+geom_hline(yintercept = 0.05)
+```
+
+- converge to normal(0,1) for n between 200 to 250
+
+##  
+
+- We draw a random sample of Cauchy(1,2) distribution . 
+ 
+- n = 10
+
+```{r echo=FALSE, warning=FALSE}
+y1=array(0)
+n1=10
+d1=cauchy_test_data(10000,n1,1,2)
+t1=test.stat(d1)
+t1_std=(t1-(n1*(n1+1)/4))/sqrt(n1*(n1+1)*(2*n1+1)/24)
+t1_std=normalized(t1_std)
+qqPlot(t1_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t1_std
+n=length(t1_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+
+y1[1]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed that there is very much deviation from normality .
+
+## 
+
+- We draw a random sample from Cauchy(1,2) distribution . 
+
+- n = 20 
+
+```{r echo=FALSE, warning=FALSE }
+
+n2=20
+d2=cauchy_test_data(10000,n2-n1,1,2)
+d2=rbind(d1,d2)
+t2=test.stat(d2)
+t2_std=(t2-(n2*(n2+1)/4))/sqrt(n2*(n2+1)*(2*n2+1)/24)
+t2_std=normalized(t2_std)
+qqPlot(t2_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t2_std
+n=length(t2_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+y1[2]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- We draw a random sample from cauchy(1,2) distribution .
+
+- n = 30
+
+```{r echo=FALSE, warning=FALSE}
+
+n3=30
+d3=cauchy_test_data(10000,n3-n2,1,2)
+d3=rbind(d2,d3)
+t3=test.stat(d3)
+t3_std=(t3-(n3*(n3+1)/4))/sqrt(n3*(n3+1)*(2*n3+1)/24)
+t3_std=normalized(t3_std)
+qqPlot(t3_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t3_std
+n=length(t3_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+
+y1[3]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- We draw a random sample from Cauchy(1,2) distribution .
+
+- n = 50
+
+```{r echo=FALSE, warning=FALSE }
+n4=50
+d4=cauchy_test_data(10000,n4-n3,1,2)
+d4=rbind(d3,d4)
+t4=test.stat(d4)
+t4_std=(t4-(n4*(n4+1)/4))/sqrt(n4*(n4+1)*(2*n4+1)/24)
+t4_std=normalized(t4_std)
+qqPlot(t4_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t4_std
+n=length(t4_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+y1[4]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- We draw a random sample from Cauchy(1,2) distribution .
+
+- n = 100 
+
+```{r echo=FALSE, warning=FALSE }
+n5=100
+d5=cauchy_test_data(10000,n5-n4,1,2)
+d5=rbind(d4,d5)
+t5=test.stat(d5)
+t5_std=(t5-(n5*(n5+1)/4))/sqrt(n5*(n5+1)*(2*n5+1)/24)
+t5_std=normalized(t5_std)
+qqPlot(t5_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+
+dt=t5_std
+n=length(t5_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+y1[5]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+## 
+
+- We draw a random sample from cauchy(1,2) distribution .
+
+- n = 200
+
+```{r echo=FALSE , warning=FALSE}
+n6=200
+d6=cauchy_test_data(10000,n6-n5,1,2)
+d6=rbind(d5,d6)
+t6=test.stat(d6)
+t6_std=(t6-(n6*(n6+1)/4))/sqrt(n6*(n6+1)*(2*n6+1)/24)
+t6_std=normalized(t6_std)
+qqPlot(t6_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+dt=t6_std
+n=length(t6_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+y1[6]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+##
+
+- We draw a random sample from Cauchy(1,2) distribution .
+
+- n = 250
+
+```{r echo=FALSE}
+
+n7=250
+d7=cauchy_test_data(10000,n7-n6,1,2)
+d7=rbind(d6,d7)
+t7=test.stat(d7)
+t7_std=(t7-(n7*(n7+1)/4))/sqrt(n7*(n7+1)*(2*n7+1)/24)
+t7_std=normalized(t7_std)
+qqPlot(t7_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+
+dt=t7_std
+n=length(t7_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+y1[7]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+##
+
+- We draw a random sample from Cauchy(1,2) distribution .
+
+- n = 300
+
+```{r echo=FALSE}
+n8=300
+d8=cauchy_test_data(10000,n8-n7,1,2)
+d8=rbind(d7,d8)
+t8=test.stat(d8)
+t8_std=(t8-(n8*(n8+1)/4))/sqrt(n8*(n8+1)*(2*n8+1)/24)
+t8_std=normalized(t8_std)
+qqPlot(t8_std,xlab="theoretical quantiles" ,ylab= " sample quantiles")
+
+
+dt=t8_std
+n=length(t8_std)
+o_f=hist(dt[dt<=3 &dt>=-3],plot=FALSE,
+     breaks=seq(-3,3,1))$counts
+e_f=n*diff(pnorm(seq(-3,3,1),0,1))
+
+y1[8]=chisq.test(o_f,p=e_f/sum(e_f))$p.value
+```
+
+- From the plot , it is observed slight improvement to normality from the previous one .
+
+- So , we can conclude that asymptotically the test statistic has a normal distribution .
+
+- For cauchy, test statistics reaches normality faster than normal under $H_1$
+
+## Goodness of fit with normal(0,1)
+
+
+```{r echo=FALSE}
+n=c(10,20,30,50,100,200,250,300)
+df_cauchy1=data.frame(n,y1)
+colnames(df_cauchy1)=c("sample size","p value")
+df_cauchy1
+
+ggplot(df_cauchy1,aes(x=c(10,20,30,50,100,200,250,300)))+
+  geom_line(aes(y=df_cauchy1[,2],col= "sample size"),lwd=1.1)+
+labs(x="sample size",y="p value")+geom_hline(yintercept = 0.05)
+```
+
+- converge to normal(0,1) for n around 30
+
+- rate of convergence depends on distribution under H1
+
+## Size Estimations of left sided test for n = 7,10,13,16,20,23,27,30 
+
+- Take critical point with respect to size 0.05
+
+```{r echo=FALSE}
+R=10000
+s_left=array(0)
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,7,0,2)
+s=s+(length(a[a<=3])/R)
+}
+s_left[1]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,10,0,2)
+s=s+(length(a[a<=10])/R)
+}
+s_left[2]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,13,0,2)
+s=s+(length(a[a<=21])/R)
+}
+s_left[3]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,16,0,2)
+s=s+(length(a[a<=35])/R)
+}
+s_left[4]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,20,0,2)
+s=s+(length(a[a<=60])/R)
+}
+s_left[5]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,23,0,2)
+s=s+(length(a[a<=83])/R)
+}
+s_left[6]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,27,0,2)
+s=s+(length(a[a<=119])/R)
+}
+s_left[7]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,30,0,2)
+s=s+(length(a[a<=151])/R)
+}
+s_left[8]=s/100
+```
+
+```{r echo=FALSE}
+
+n=c(7,10,13,16,20,23,27,30)
+df_left=data.frame(n,s_left)
+colnames(df_left)=c("sample size","est. size")
+df_left
+ggplot(df_left,aes(x=c(7,10,13,16,20,23,27,30)))+
+  geom_line(aes(y=df_left[,2],col= "sample size"),lwd=1.1)+
+labs(x="sample size",y="est size")+geom_hline(yintercept = 0.05)
+```
+
+- estimated size always less than 0.05
+
+## Size Estimations of right tailed test for n = 7,10,13,16,20,23,27,30
+
+```{r echo=FALSE}
+R=10000
+
+s_right=array(0)
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,7,0,2)
+s=s+(length(a[a>=25])/R)
+}
+s_right[1]=s/100
+
+for (iter in 1:100){
+a=cauchy_test.stat(R,10,0,2)
+s=s+(length(a[a>=45])/R)
+}
+s_right[2]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,13,0,2)
+s=s+(length(a[a>=70])/R)
+}
+s_right[3]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,16,0,2)
+s=s+(length(a[a>=101])/R)
+}
+s_right[4]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,20,0,2)
+s=s+(length(a[a>=150])/R)
+}
+s_right[5]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,23,0,2)
+s=s+(length(a[a>=193])/R)
+}
+s_right[6]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,27,0,2)
+s=s+(length(a[a>=259])/R)
+}
+s_right[7]=s/100
+
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,30,0,2)
+s=s+(length(a[a>=314])/R)
+}
+s_right[8]=s/100
+```
+
+```{r echo=FALSE}
+
+n=c(7,10,13,16,20,23,27,30)
+df_right=data.frame(n,s_right)
+colnames(df_right)=c("sample size","est. size")
+df_right
+ggplot(df_right,aes(x=c(7,10,13,16,20,23,27,30)))+
+  geom_line(aes(y=df_right[,2],col= "sample size"),lwd=1.1)+
+labs(x="sample size",y="est size")+geom_hline(yintercept = 0.05)
+```
+
+- estimated size closes to 0.05 for sample size, n between 15 to 30
+
+## Size Estimations of both tailed test for n = 7,10,13,16,20,23,27,30
+
+```{r echo=FALSE}
+R=10000
+s_both=array(0)
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,7,0,2)
+s=s+2*(length(a[a<=2])/R)
+}
+s_both[1]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,10,0,2)
+s=s+2*(length(a[a<=8])/R)
+}
+s_both[2]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,13,0,2)
+s=s+2*(length(a[a<=17])/R)
+}
+s_both[3]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,16,0,2)
+s=s+2*(length(a[a<=29])/R)
+}
+s_both[4]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,20,0,2)
+s=s+2*(length(a[a<=52])/R)
+}
+s_both[5]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,23,0,2)
+s=s+2*(length(a[a<=73])/R)
+}
+s_both[6]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,27,0,2)
+s=s+2*(length(a[a<=107])/R)
+}
+s_both[7]=s/100
+
+s=0
+for (iter in 1:100){
+a=cauchy_test.stat(R,30,0,2)
+s=s+2*(length(a[a<=137])/R)
+}
+s_both[8]=s/100
+```
+```{r echo=FALSE}
+
+n=c(7,10,13,16,20,23,27,30)
+df_both=data.frame(n,s_both)
+colnames(df_both)=c("sample size","est. size")
+df_both
+ggplot(df_both,aes(x=c(7,10,13,16,20,23,27,30)))+
+  geom_line(aes(y=df_both[,2],col= "sample size"),lwd=1.1)+
+labs(x="sample size",y="est size")+geom_hline(yintercept = 0.05)
+```
+- estimated size has a increasing trend for sample size between 15 to 30
+
+## Power Function and its comparision with parametric counterpart
+
+### Power Curves for fixed sample size 
+- Case 1 : H0  : $\theta$ = 0 vs H1 : $\theta$ > 0
+- Case 2 : H0  : $\theta$ = 0 vs H1 : $\theta$ < 0
+- Case 3 : H0  : $\theta$ = 0 vs H1 : $\theta$ $\neq$ 0
+
+### Power Curves for for fixed $\theta$ and varying sample size
+- Case 1 : $\theta$ > 0
+- Case 2 : $\theta$ < 0
+
+### Comparision with parametric counterpart
+
+- Case 1 : Comparision of Power Curve for testing H0 : $\theta$ = 0 vs H1 : $\theta$ > 0 when sample is drawn from Normal population with location parameter $\theta$ (Using t test as well as z test)
+
+- Case 2 : Comparision of Power Curve for testing H0 : $\theta$ = 0 vs H1 : $\theta$ < 0 when sample is drawn from Normal population with location parameter $\theta$ (Using t test as well as z test)
+
+- Case 3 :Comparision of Power Curve for testing H0 : $\theta$ = 0 vs H1 : $\theta$ $\neq$ 0 when sample is drawn from Normal population with location parameter $\theta$ (Using t test as well as z test)
+
+- Case 4 ::Comparision of Power Curve for testing H0 : $\theta$ = 0 vs H1 : $\theta$ $\neq$ 0 when sample is drawn from Cauchy population with location parameter $\theta$ (Using t test and asymptotic test for median)
+ 
+## 
+
+- H0  : $\theta$ = 0 vs H1 : $\theta$ > 0
+
+```{r , echo=FALSE}
+R=1000
+
+#n=10
+power_n10=function(theta)
+{
+a1=norm_test.stat(R,10,theta,2)
+length(a1[a1>=45])/R
+}
+
+theta=seq(0,3,length.out=50)
+y1=array(0)
+for (i in 1:length(theta))
+{
+  y1[i]=power_n10(theta[i])
+}
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+  geom_line(lwd=2,col=6)+labs(
+    title="Power Curve ",subtitle="n=10",y="Power")+theme_light()
+
+#n=20
+power_n20=function(theta)
+{
+a1=norm_test.stat(R,20,theta,2)
+length(a1[a1>=150])/R
+}
+
+theta=seq(0,3,length.out=50)
+y2=array(0)
+for (i in 1:length(theta))
+{
+  y2[i]=power_n20(theta[i])
+}
+ggplot(data=data.frame(theta,y2),aes(x=theta,y=y2))+
+  geom_line(lwd=2,col=5)+labs(
+    title="Power Curve ",subtitle="n=20",y="Power")+theme_light()
+
+#n=30
+power_n30=function(theta)
+{
+a1=norm_test.stat(R,30,theta,2)
+length(a1[a1>=314])/R
+}
+
+theta=seq(0,3,length.out=50)
+y3=array(0)
+for (i in 1:length(theta))
+{
+  y3[i]=power_n30(theta[i])
+}
+ggplot(data=data.frame(theta,y3),aes(x=theta,y=y3))+
+  geom_line(lwd=2,col=7)+labs(
+    title="Power Curve ",subtitle="n=30",y="Power")+theme_light()
+
+df=data=data.frame(y1,y2,y3)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "n=10"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "n=20"),lwd=1)+
+  geom_line(aes(y=df[,3],col= "n=30"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="theta",y="Power")+geom_hline(yintercept = 0.05)+theme_light()
+
+```
+
+- Observation :
+- For fixed theta, here samples are drawn from N($\theta$,2), power converges faster to unity with increase in sample size.
+
+
+## 
+- H0  : $\theta$ = 0 vs H1 : $\theta$ < 0
+
+```{r,echo=FALSE}
+R=1000
+
+#n=10
+power_n10=function(theta)
+{
+a1=norm_test.stat(R,10,theta,2)
+length(a1[a1<=10])/R
+}
+
+theta=seq(-3,0,length.out=20)
+y1=array(0)
+for (i in 1:length(theta))
+{
+  y1[i]=power_n10(theta[i])
+}
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+  geom_line(lwd=2,col=6)+labs(
+    title="Power Curve ",subtitle="n=10",y="Power")+theme_light()
+
+#n=20
+power_n20=function(theta)
+{
+a1=norm_test.stat(R,20,theta,2)
+length(a1[a1<=60])/R
+}
+
+
+y2=array(0)
+for (i in 1:length(theta))
+{
+  y2[i]=power_n20(theta[i])
+}
+ggplot(data=data.frame(theta,y2),aes(x=theta,y=y2))+
+  geom_line(lwd=2,col=5)+labs(
+    title="Power Curve ",subtitle="n=20",y="Power")+theme_light()
+
+#n=30
+power_n30=function(theta)
+{
+a1=norm_test.stat(R,30,theta,2)
+length(a1[a1<=151])/R
+}
+
+
+y3=array(0)
+for (i in 1:length(theta))
+{
+  y3[i]=power_n30(theta[i])
+}
+ggplot(data=data.frame(theta,y3),aes(x=theta,y=y3))+
+  geom_line(lwd=2,col=7)+labs(
+    title="Power Curve ",subtitle="n=30",y="Power")+theme_light()
+
+df=data=data.frame(y1,y2,y3)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "n=10"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "n=20"),lwd=1)+
+  geom_line(aes(y=df[,3],col= "n=30"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="theta",y="Power")+geom_hline(yintercept = 0.05)+theme_light()
+
+```
+
+
+- Observation :
+- For fixed theta, here samples are drawn from N($\theta$,2), power converges faster to unity with increase in sample size.
+
+
+## 
+- H0  : $\theta$ = 0 vs H1 : $\theta$ $\neq$ 0
+
+```{r,echo=FALSE}
+R=1000
+
+#n=10
+power_n10=function(theta)
+{
+a1=norm_test.stat(R,10,theta,2)
+((length(a1[a1<=8]))+(length(a1[a1>=47])))/R
+}
+
+theta=seq(-3,3,length.out=20)
+y1=array(0)
+for (i in 1:length(theta))
+{
+  y1[i]=power_n10(theta[i])
+}
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+  geom_line(lwd=2,col=6)+labs(
+    title="Power Curve ",subtitle="n=10",y="Power")+geom_hline(yintercept = 0.05)+theme_light()
+
+#n=20
+power_n20=function(theta)
+{
+a1=norm_test.stat(R,20,theta,2)
+((length(a1[a1<=52]))+(length(a1[a1>=158])))/R
+}
+
+
+y2=array(0)
+for (i in 1:length(theta))
+{
+  y2[i]=power_n20(theta[i])
+}
+ggplot(data=data.frame(theta,y2),aes(x=theta,y=y2))+
+  geom_line(lwd=2,col=5)+labs(
+    title="Power Curve ",subtitle="n=20",y="Power")+geom_hline(yintercept = 0.05)+theme_light()
+
+#n=30
+power_n30=function(theta)
+{
+a1=norm_test.stat(R,30,theta,2)
+((length(a1[a1<=137]))+(length(a1[a1>=328])))/R
+}
+
+
+y3=array(0)
+for (i in 1:length(theta))
+{
+  y3[i]=power_n30(theta[i])
+}
+ggplot(data=data.frame(theta,y3),aes(x=theta,y=y3))+
+  geom_line(lwd=2,col=7)+labs(
+    title="Power Curve ",subtitle="n=30",y="Power")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y1,y2,y3)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "n=10"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "n=20"),lwd=1)+
+  geom_line(aes(y=df[,3],col= "n=30"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="theta",y="Power")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+```
+
+- Observation :
+- For fixed theta, here samples are drawn from N($\theta$,2), power converges faster to unity with increase in sample size.
+
+##
+- Power Curve for varying n for fixed $\theta$ (>0)
+
+```{r,echo=FALSE}
+#theta=1
+power_theta5=function(n,c)
+{
+a1=cauchy_test.stat(R,n,1,0.5)
+length(a1[a1>=c])/R
+}
+
+y1=array(0)
+n=c(5,10,15,20,25,30)
+n_crit=c(15,45,90,150,225,314)
+for (i in 1:length(n))
+{
+  y1[i]=power_theta5(n[i],n_crit[i])
+}
+
+ggplot(data=data.frame(n,y1),aes(x=n,y=y1))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="theta=1",y="Power",x="Sample Size ")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+#theta=2
+power_theta5=function(n,c)
+{
+a1=cauchy_test.stat(R,n,2,0.5)
+length(a1[a1>=c])/R
+}
+
+y2=array(0)
+n=c(5,10,15,20,25,30)
+n_crit=c(15,45,90,150,225,314)
+for (i in 1:length(n))
+{
+  y2[i]=power_theta5(n[i],n_crit[i])
+}
+
+ggplot(data=data.frame(n,y2),aes(x=n,y=y2))+
+  geom_line(lwd=2,col=3)+labs(
+    title="Power Curve ",subtitle="theta=2",y="Power",x="Sample Size ")+geom_hline(yintercept = 0.05)+theme_light()
+
+#theta=5
+power_theta5=function(n,c)
+{
+a1=cauchy_test.stat(R,n,5,0.5)
+length(a1[a1>=c])/R
+}
+
+y3=array(0)
+n=c(5,10,15,20,25,30)
+n_crit=c(15,45,90,150,225,314)
+for (i in 1:length(n))
+{
+  y3[i]=power_theta5(n[i],n_crit[i])
+}
+
+ggplot(data=data.frame(n,y3),aes(x=n,y=y3))+
+  geom_line(lwd=2,col=7)+labs(
+    title="Power Curve ",subtitle="theta=5",y="Power",x="Sample Size ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y1,y2,y3)
+ggplot(df,aes(x=n))+
+  geom_line(aes(y=df[,1],col= "theta=1"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "theta=2"),lwd=1)+
+  geom_line(aes(y=df[,3],col= "theta=5"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Sample Size",y="Power")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+```
+- Observation:
+- The more we depart from 0 , faster is the convergence of the power to unity. In other words, the power function goes to unity for smaller sample size as the value of $\theta$ increases.
+
+
+
+##
+- Power Curve for varying n for fixed $\theta$ (<0)
+
+```{r,echo=FALSE}
+#theta=-1
+power_theta5=function(n,c)
+{
+a1=cauchy_test.stat(R,n,-1,0.5)
+length(a1[a1<=c])/R
+}
+
+y1=array(0)
+n=c(5,10,15,20,25,30)
+n_crit=c(0,10,30,60,100,151)
+for (i in 1:length(n))
+{
+  y1[i]=power_theta5(n[i],n_crit[i])
+}
+
+ggplot(data=data.frame(n,y1),aes(x=n,y=y1))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="theta=1",y="Power",x="Sample Size ")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+#theta=-2
+power_theta5=function(n,c)
+{
+a1=cauchy_test.stat(R,n,-2,0.5)
+length(a1[a1<=c])/R
+}
+
+y2=array(0)
+n=c(5,10,15,20,25,30)
+n_crit=c(0,10,30,60,100,151)
+for (i in 1:length(n))
+{
+  y2[i]=power_theta5(n[i],n_crit[i])
+}
+
+ggplot(data=data.frame(n,y2),aes(x=n,y=y2))+
+  geom_line(lwd=2,col=3)+labs(
+    title="Power Curve ",subtitle="theta=2",y="Power",x="Sample Size ")+geom_hline(yintercept = 0.05)+theme_light()
+
+#theta=-5
+power_theta5=function(n,c)
+{
+a1=cauchy_test.stat(R,n,-5,0.5)
+length(a1[a1<=c])/R
+}
+
+y3=array(0)
+n=c(5,10,15,20,25,30)
+n_crit=c(0,10,30,60,100,151)
+for (i in 1:length(n))
+{
+  y3[i]=power_theta5(n[i],n_crit[i])
+}
+
+ggplot(data=data.frame(n,y3),aes(x=n,y=y3))+
+  geom_line(lwd=2,col=7)+labs(
+    title="Power Curve ",subtitle="theta=5",y="Power",x="Sample Size ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y1,y2,y3)
+ggplot(df,aes(x=n))+
+  geom_line(aes(y=df[,1],col= "theta= -1"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "theta= -2"),lwd=1)+
+  geom_line(aes(y=df[,3],col= "theta= -5"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Sample Size",y="Power")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+```
+
+
+- Observation:
+
+- The more we depart from 0 , faster is the convergence of the power to unity. In other words, the power function goes to unity for smaller sizes as the value of $\theta$ increases.
+
+
+## Parametric Counterpart
+
+- Let us consider the case when a sample of size n is drawn from N($\mu$,$\sigma^2$), $\sigma$ > 0 unknown
+- H0 : $\mu$ = 0 vs H1 : $\mu$ < 0 , $\sigma$ unknown
+
+```{r,echo=FALSE}
+
+
+#n=10
+n=10
+R=10000
+power_n10=function(theta)
+{
+a1=norm_test.stat(R,10,theta,3)
+length(a1[a1<=10])/R
+}
+
+theta=seq(-5,0,length.out=20)
+y=array(0)
+for (i in 1:length(theta))
+{
+  y[i]=power_n10(theta[i])
+}
+ggplot(data=data.frame(theta,y),aes(x=theta,y=y))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="n=10 :: Non -Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+p=array(0)
+power_n_norm_sigma=function(n,theta){
+ 
+ for (iter in 1:length(theta)){
+  t=array(0) 
+  for (i in 1:R){
+    x=rnorm(n,theta[iter],3)
+    sigma=sd(x)
+    t[i]=sqrt(n)*mean(x)/sigma
+  }
+ p[iter]=length(t[t<=-qt(0.95,n-1)])/R
+ }
+  p
+}
+y1=power_n_norm_sigma(10,theta)
+
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+ geom_line(lwd=2,col=2)+labs(
+    title="Power Curve ",subtitle="n=10 :: Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y,y1)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "Non- Parametric Setup"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "Parametric setup"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Theta",y="Power",subtitle = "n=10")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+#n=20
+n=20
+R=10000
+power_n20=function(theta)
+{
+a1=norm_test.stat(R,20,theta,3)
+length(a1[a1<=60])/R
+}
+
+theta=seq(-5,0,length.out=20)
+y=array(0)
+for (i in 1:length(theta))
+{
+  y[i]=power_n20(theta[i])
+}
+ggplot(data=data.frame(theta,y),aes(x=theta,y=y))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="n=20 :: Non -Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+p=array(0)
+power_n_norm_sigma=function(n,theta){
+ 
+ for (iter in 1:length(theta)){
+  t=array(0) 
+  for (i in 1:R){
+    x=rnorm(n,theta[iter],3)
+    sigma=sd(x)
+    t[i]=sqrt(n)*mean(x)/sigma
+  }
+ p[iter]=length(t[t<=-qt(0.95,n-1)])/R
+ }
+  p
+}
+y1=power_n_norm_sigma(20,theta)
+
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+ geom_line(lwd=2,col=2)+labs(
+    title="Power Curve ",subtitle="n=20 :: Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y,y1)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "Non- Parametric Setup"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "Parametric setup"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Theta",y="Power",subtitle = "n=20")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+
+#n=30
+n=30
+R=10000
+power_n30=function(theta)
+{
+a1=norm_test.stat(R,30,theta,3)
+length(a1[a1<=151])/R
+}
+
+theta=seq(-3,0,length.out=20)
+y=array(0)
+for (i in 1:length(theta))
+{
+  y[i]=power_n30(theta[i])
+}
+ggplot(data=data.frame(theta,y),aes(x=theta,y=y))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="n=30 :: Non -Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+p=array(0)
+power_n_norm_sigma=function(n,theta){
+ 
+ for (iter in 1:length(theta)){
+  t=array(0) 
+  for (i in 1:R){
+    x=rnorm(n,theta[iter],3)
+    sigma=sd(x)
+    t[i]=sqrt(n)*mean(x)/sigma
+  }
+ p[iter]=length(t[t<=-qt(0.95,n-1)])/R
+ }
+  p
+}
+y1=power_n_norm_sigma(30,theta)
+
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+ geom_line(lwd=2,col=2)+labs(
+    title="Power Curve ",subtitle="n=30 :: Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y,y1)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "Non- Parametric Setup"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "Parametric setup"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Theta",y="Power",subtitle = "n=30")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+```
+
+
+- Observation :
+
+- Considering the t-test , the power curve for the parametric test is converging faster to unity than that of the non-parametric setup for varying sample sizes.
+
+- Increase in sample size leads to faster rate of convergence to unity.
+
+- Both parametric and non-parametric setup shows that the tests are unbiased.
+
+
+## Parametric Counterpart
+
+- H0 : $\mu$ = 0 vs H1 : $\mu$ > 0 , $\sigma$ unknown
+
+```{r,echo=FALSE}
+#n=10
+n=10
+R=10000
+power_n10=function(theta)
+{
+a1=norm_test.stat(R,10,theta,3)
+length(a1[a1>=45])/R
+}
+
+theta=seq(0,5,length.out=20)
+y=array(0)
+for (i in 1:length(theta))
+{
+  y[i]=power_n10(theta[i])
+}
+ggplot(data=data.frame(theta,y),aes(x=theta,y=y))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="n=10 :: Non -Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+p=array(0)
+power_n_norm_sigma=function(n,theta){
+ 
+ for (iter in 1:length(theta)){
+  t=array(0) 
+  for (i in 1:R){
+    x=rnorm(n,theta[iter],3)
+    sigma=sd(x)
+    t[i]=sqrt(n)*mean(x)/sigma
+  }
+ p[iter]=length(t[t>=qt(0.95,n-1)])/R
+ }
+  p
+}
+y1=power_n_norm_sigma(10,theta)
+
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+ geom_line(lwd=2,col=2)+labs(
+    title="Power Curve ",subtitle="n=10 :: Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y,y1)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "Non- Parametric Setup"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "Parametric setup"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Theta",y="Power")+geom_hline(yintercept = 0.05)+theme_light()
+
+#n=20
+n=20
+R=10000
+power_n20=function(theta)
+{
+a1=norm_test.stat(R,20,theta,3)
+length(a1[a1>=150])/R
+}
+
+theta=seq(0,5,length.out=20)
+y=array(0)
+for (i in 1:length(theta))
+{
+  y[i]=power_n20(theta[i])
+}
+ggplot(data=data.frame(theta,y),aes(x=theta,y=y))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="n=20 :: Non -Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+p=array(0)
+power_n_norm_sigma=function(n,theta){
+ 
+ for (iter in 1:length(theta)){
+  t=array(0) 
+  for (i in 1:R){
+    x=rnorm(n,theta[iter],3)
+    sigma=sd(x)
+    t[i]=sqrt(n)*mean(x)/sigma
+  }
+ p[iter]=length(t[t>=qt(0.95,n-1)])/R
+ }
+  p
+}
+y1=power_n_norm_sigma(20,theta)
+
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+ geom_line(lwd=2,col=2)+labs(
+    title="Power Curve ",subtitle="n=20 :: Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y,y1)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "Non- Parametric Setup"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "Parametric setup"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Theta",y="Power")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+#n=30
+n=30
+R=10000
+power_n30=function(theta)
+{
+a1=norm_test.stat(R,30,theta,3)
+length(a1[a1>=314])/R
+}
+
+theta=seq(0,3,length.out=20)
+y=array(0)
+for (i in 1:length(theta))
+{
+  y[i]=power_n30(theta[i])
+}
+ggplot(data=data.frame(theta,y),aes(x=theta,y=y))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="n=30 :: Non -Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+p=array(0)
+power_n_norm_sigma=function(n,theta){
+ 
+ for (iter in 1:length(theta)){
+  t=array(0) 
+  for (i in 1:R){
+    x=rnorm(n,theta[iter],3)
+    sigma=sd(x)
+    t[i]=sqrt(n)*mean(x)/sigma
+  }
+ p[iter]=length(t[t>=qt(0.95,n-1)])/R
+ }
+  p
+}
+y1=power_n_norm_sigma(30,theta)
+
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+ geom_line(lwd=2,col=2)+labs(
+    title="Power Curve ",subtitle="n=30 :: Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y,y1)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "Non- Parametric Setup"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "Parametric setup"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Theta",y="Power")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+```
+
+
+- Observation :
+
+- Considering the t-test , the power curve for the parametric test is converging faster to unity than that of the non-parametric setup for varying sample sizes.
+
+- Increase in sample size leads to faster rate of convergence to unity.
+
+- Both parametric and non-parametric setup shows that the tests are unbiased.
+
+## 
+H0 : $\mu$ = 0 vs H1 : $\mu$ $\neq$ 0 , $\sigma$ unknown
+
+```{r,echo=FALSE}
+#n=10
+n=10
+R=10000
+power_n10=function(theta)
+{
+a1=norm_test.stat(R,10,theta,3)
+(length(a1[a1<=8])+length(a1[a1>=47]))/R
+}
+
+theta=seq(-5,5,length.out=20)
+y=array(0)
+for (i in 1:length(theta))
+{
+  y[i]=power_n10(theta[i])
+}
+ggplot(data=data.frame(theta,y),aes(x=theta,y=y))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="n=10 :: Non -Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+p=array(0)
+power_n_norm_sigma=function(n,theta){
+ 
+ for (iter in 1:length(theta)){
+  t=array(0) 
+  for (i in 1:R){
+    x=rnorm(n,theta[iter],3)
+    sigma=sd(x)
+    t[i]=sqrt(n)*mean(x)/sigma
+  }
+ p[iter]=length(t[abs(t)>=qt(0.975,n-1)])/R
+ }
+  p
+}
+y1=power_n_norm_sigma(10,theta)
+
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+ geom_line(lwd=2,col=2)+labs(
+    title="Power Curve ",subtitle="n=10 :: Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y,y1)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "Non- Parametric Setup"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "Parametric setup"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Theta",y="Power",subtitle="n=10")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+#n=20
+
+n=20
+R=10000
+power_n20=function(theta)
+{
+a1=norm_test.stat(R,20,theta,3)
+(length(a1[a1<=52])+length(a1[a1>=158]))/R
+}
+
+theta=seq(-3,3,length.out=20)
+y=array(0)
+for (i in 1:length(theta))
+{
+  y[i]=power_n20(theta[i])
+}
+ggplot(data=data.frame(theta,y),aes(x=theta,y=y))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="n=20 :: Non -Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+p=array(0)
+power_n_norm_sigma=function(n,theta){
+ 
+ for (iter in 1:length(theta)){
+  t=array(0) 
+  for (i in 1:R){
+    x=rnorm(n,theta[iter],3)
+    sigma=sd(x)
+    t[i]=sqrt(n)*mean(x)/sigma
+  }
+ p[iter]=length(t[abs(t)>=qt(0.975,n-1)])/R
+ }
+  p
+}
+y1=power_n_norm_sigma(20,theta)
+
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+ geom_line(lwd=2,col=2)+labs(
+    title="Power Curve ",subtitle="n=20 :: Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y,y1)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "Non- Parametric Setup"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "Parametric setup"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Theta",y="Power",subtitle="n=20")+geom_hline(yintercept = 0.05)+theme_light()
+
+#n=30
+n=30
+R=10000
+power_n30=function(theta)
+{
+a1=norm_test.stat(R,30,theta,3)
+(length(a1[a1<=137])+length(a1[a1>=328]))/R
+}
+
+theta=seq(-3,3,length.out=20)
+y=array(0)
+for (i in 1:length(theta))
+{
+  y[i]=power_n30(theta[i])
+}
+ggplot(data=data.frame(theta,y),aes(x=theta,y=y))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="n=30 :: Non -Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+p=array(0)
+power_n_norm_sigma=function(n,theta){
+ 
+ for (iter in 1:length(theta)){
+  t=array(0) 
+  for (i in 1:R){
+    x=rnorm(n,theta[iter],3)
+    sigma=sd(x)
+    t[i]=sqrt(n)*mean(x)/sigma
+  }
+ p[iter]=length(t[abs(t)>=qt(0.975,n-1)])/R
+ }
+  p
+}
+y1=power_n_norm_sigma(30,theta)
+
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+ geom_line(lwd=2,col=2)+labs(
+    title="Power Curve ",subtitle="n=30 :: Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y,y1)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "Non- Parametric Setup"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "Parametric setup"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Theta",y="Power",subtitle="n=30")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+```
+- Observation :
+
+- Considering the t-test , the power curve for the parametric test is converging faster to unity than that of the non-parametric setup for varying sample sizes.
+
+- Increase in sample size leads to faster rate of convergence to unity.
+
+- Both parametric and non-parametric setup shows that the tests are unbiased.
+
+
+## Parametric Counterpart
+
+- Let us consider the case when a sample of size n is drawn from Cauchy($\mu$,$\sigma$), $\sigma$ > 0 unknown
+
+
+- H0 : $\mu$ = 0 vs H1 : $\mu$ $\neq$ 0 , $\sigma$ unknown
+- Note : The samples are drawn from Cauchy population and t-test is used.
+```{r,echo=FALSE}
+#n=10
+n=10
+R=10000
+power_n10=function(theta)
+{
+a1=norm_test.stat(R,10,theta,3)
+(length(a1[a1<=8])+length(a1[a1>=47]))/R
+}
+
+theta=seq(-5,5,length.out=20)
+y=array(0)
+for (i in 1:length(theta))
+{
+  y[i]=power_n10(theta[i])
+}
+ggplot(data=data.frame(theta,y),aes(x=theta,y=y))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="n=10 :: Non -Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+p=array(0)
+power_n_cauchy_sigma=function(n,theta){
+ 
+ for (iter in 1:length(theta)){
+  t=array(0) 
+  for (i in 1:R){
+    x=rcauchy(n,theta[iter],3)
+    sigma=sd(x)
+    t[i]=sqrt(n)*mean(x)/sigma
+  }
+ p[iter]=length(t[abs(t)>=qt(0.975,n-1)])/R
+ }
+  p
+}
+y1=power_n_cauchy_sigma(10,theta)
+
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+ geom_line(lwd=2,col=2)+labs(
+    title="Power Curve ",subtitle="n=10 :: Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y,y1)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "Non- Parametric Setup"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "Parametric setup"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Theta",y="Power",subtitle="n=10")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+#n=20
+
+n=20
+R=10000
+power_n20=function(theta)
+{
+a1=norm_test.stat(R,20,theta,3)
+(length(a1[a1<=52])+length(a1[a1>=158]))/R
+}
+
+theta=seq(-3,3,length.out=20)
+y=array(0)
+for (i in 1:length(theta))
+{
+  y[i]=power_n20(theta[i])
+}
+ggplot(data=data.frame(theta,y),aes(x=theta,y=y))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="n=20 :: Non -Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+p=array(0)
+power_n_cauchy_sigma=function(n,theta){
+ 
+ for (iter in 1:length(theta)){
+  t=array(0) 
+  for (i in 1:R){
+    x=rcauchy(n,theta[iter],3)
+    sigma=sd(x)
+    t[i]=sqrt(n)*mean(x)/sigma
+  }
+ p[iter]=length(t[abs(t)>=qt(0.975,n-1)])/R
+ }
+  p
+}
+y1=power_n_cauchy_sigma(20,theta)
+
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+ geom_line(lwd=2,col=2)+labs(
+    title="Power Curve ",subtitle="n=20 :: Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y,y1)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "Non- Parametric Setup"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "Parametric setup"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Theta",y="Power",subtitle="n=20")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+```
+
+
+- Observation :
+
+- Considering the z-test , the power curve for the non-parametric test is converging faster to unity than that of the parametric setup for varying sample sizes. 
+
+- The possible reason for this scenario is the thicker tails for Cauchy Distribution.
+
+
+## Test statistic is taken to be Sample Median
+
+```{r,echo=FALSE}
+#n=10
+n=10
+R=10000
+power_n10=function(theta)
+{
+a1=norm_test.stat(R,10,theta,3)
+(length(a1[a1<=8])+length(a1[a1>=47]))/R
+}
+
+theta=seq(-5,5,0.1)
+y=array(0)
+for (i in 1:length(theta))
+{
+  y[i]=power_n10(theta[i])
+}
+ggplot(data=data.frame(theta,y),aes(x=theta,y=y))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="n=10 :: Non -Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+p=array(0)
+power_n_cauchy_sigma=function(n,theta){
+ 
+ for (iter in 1:length(theta)){
+  t=array(0) 
+  for (i in 1:R){
+    x=rcauchy(n,theta[iter],1)
+
+    t[i]=sqrt(n)*median(x)*2/(3.14)
+  }
+ p[iter]=length(t[abs(t)>=qnorm(0.975,0,1)])/R
+ }
+  p
+}
+y1=power_n_cauchy_sigma(10,theta)
+
+
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+ geom_line(lwd=2,col=2)+labs(
+    title="Power Curve ",subtitle="n=10 :: Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y,y1)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "Non- Parametric Setup"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "Parametric setup"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Theta",y="Power",subtitle="n=10")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+#n=20
+
+n=20
+R=10000
+power_n20=function(theta)
+{
+a1=norm_test.stat(R,20,theta,3)
+(length(a1[a1<=52])+length(a1[a1>=158]))/R
+}
+
+theta=seq(-3,3,0.1)
+y=array(0)
+for (i in 1:length(theta))
+{
+  y[i]=power_n20(theta[i])
+}
+ggplot(data=data.frame(theta,y),aes(x=theta,y=y))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="n=20 :: Non -Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+p=array(0)
+power_n_cauchy_sigma=function(n,theta){
+ 
+ for (iter in 1:length(theta)){
+  t=array(0) 
+  for (i in 1:R){
+    x=rcauchy(n,theta[iter],1)
+
+    t[i]=sqrt(n)*median(x)*2/(3.14)
+  }
+ p[iter]=length(t[abs(t)>=qnorm(0.975,0,1)])/R
+ }
+  p
+}
+y1=power_n_cauchy_sigma(20,theta)
+
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+ geom_line(lwd=2,col=2)+labs(
+    title="Power Curve ",subtitle="n=20 :: Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y,y1)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "Non- Parametric Setup"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "Parametric setup"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Theta",y="Power",subtitle="n=20")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+#n=30
+#n=20
+
+n=30
+R=10000
+power_n30=function(theta)
+{
+a1=norm_test.stat(R,30,theta,3)
+(length(a1[a1<=137])+length(a1[a1>=328]))/R
+}
+
+theta=seq(-3,3,0.1)
+y=array(0)
+for (i in 1:length(theta))
+{
+  y[i]=power_n30(theta[i])
+}
+ggplot(data=data.frame(theta,y),aes(x=theta,y=y))+
+  geom_line(lwd=2,col=4)+labs(
+    title="Power Curve ",subtitle="n=30 :: Non -Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+p=array(0)
+power_n_cauchy_sigma=function(n,theta){
+ 
+ for (iter in 1:length(theta)){
+  t=array(0) 
+  for (i in 1:R){
+    x=rcauchy(n,theta[iter],1)
+
+    t[i]=sqrt(n)*median(x)*2/(3.14)
+  }
+ p[iter]=length(t[abs(t)>=qnorm(0.975,0,1)])/R
+ }
+  p
+}
+y1=power_n_cauchy_sigma(30,theta)
+
+ggplot(data=data.frame(theta,y1),aes(x=theta,y=y1))+
+ geom_line(lwd=2,col=2)+labs(
+    title="Power Curve ",subtitle="n=30 :: Parametric Setup",y="Power",x="theta ")+geom_hline(yintercept = 0.05)+theme_light()
+
+df=data=data.frame(y,y1)
+ggplot(df,aes(x=theta))+
+  geom_line(aes(y=df[,1],col= "Non- Parametric Setup"),lwd=1)+
+  geom_line(aes(y=df[,2],col= "Parametric setup"),lwd=1)+
+  labs(title="Comparision of Power Curves",x="Theta",y="Power",subtitle="n=30")+geom_hline(yintercept = 0.05)+theme_light()
+
+
+```
+
+- Observation :
+
+- Considering the asymptotic distribution of median , the power curve for the parametric test is converging faster to unity than that of the non-parametric setup for varying sample sizes.
+
+- Both the scenarios show that the test is unbiased.
+
